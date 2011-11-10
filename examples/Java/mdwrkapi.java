@@ -30,7 +30,7 @@ public class mdwrkapi {
 
     private long timeout = 2500;
     private boolean verbose;// Print activity to stdout
-    private Formatter fmt = new Formatter(System.out);
+    private Formatter log = new Formatter(System.out);
 
     // Return address, if any
     private ZFrame replyTo;
@@ -64,8 +64,8 @@ public class mdwrkapi {
         msg.addFirst(new ZFrame(new byte[0]));
 
         if (verbose) {
-            fmt.format("I: sending %s to broker\n%s", command, msg.toString());
-
+            log.format("I: sending %s to broker\n", command);
+            msg.dump(log.out());
         }
         msg.send(worker);
     }
@@ -80,7 +80,7 @@ public class mdwrkapi {
         worker = ctx.createSocket(ZMQ.DEALER);
         worker.connect(broker);
         if (verbose)
-            fmt.format("I: connecting to broker at %s...\n", broker);
+            log.format("I: connecting to broker at %s...\n", broker);
 
         // Register service with broker
         sendToBroker(MDP.W_READY, service, null);
@@ -118,9 +118,10 @@ public class mdwrkapi {
                 ZMsg msg = ZMsg.recvMsg(worker);
                 if (msg == null)
                     break; // Interrupted
-                if (verbose)
-                    fmt.format("I: received message from broker: \n%s",
-                            msg.toString());
+                if (verbose) {
+                    log.format("I: received message from broker: \n");
+                    msg.dump(log.out());
+                }
                 liveness = HEARTBEAT_LIVENESS;
                 // Don't try to handle errors, just assert noisily
                 assert (msg != null && msg.size() >= 3);
@@ -145,13 +146,14 @@ public class mdwrkapi {
                 } else if (MDP.W_DISCONNECT.frameEquals(command)) {
                     reconnectToBroker();
                 } else {
-                    fmt.format("E: invalid input message: \n%s", msg.toString());
+                    log.format("E: invalid input message: \n");
+                    msg.dump(log.out());
                 }
                 command.destroy();
                 msg.destroy();
             } else if (--liveness == 0) {
                 if (verbose)
-                    fmt.format("W: disconnected from broker - retrying...");
+                    log.format("W: disconnected from broker - retrying...\n");
                 try {
                     Thread.sleep(reconnect);
                 } catch (InterruptedException e) {
@@ -170,7 +172,7 @@ public class mdwrkapi {
 
         }
         if (Thread.currentThread().isInterrupted())
-            fmt.format("W: interrupt received, killing worker...\n");
+            log.format("W: interrupt received, killing worker...\n");
         return null;
     }
 

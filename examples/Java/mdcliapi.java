@@ -19,7 +19,7 @@ public class mdcliapi {
     private long timeout = 2500;
     private int retries = 3;
     private boolean verbose;
-    private Formatter fmt = new Formatter(System.out);
+    private Formatter log = new Formatter(System.out);
 
     public long getTimeout() {
         return timeout;
@@ -54,7 +54,7 @@ public class mdcliapi {
         client = ctx.createSocket(ZMQ.REQ);
         client.connect(broker);
         if (verbose)
-            fmt.format("I: connecting to broker at %s...\n", broker);
+            log.format("I: connecting to broker at %s...\n", broker);
     }
 
     /**
@@ -70,9 +70,10 @@ public class mdcliapi {
 
         request.push(new ZFrame(service));
         request.push(MDP.C_CLIENT.newFrame());
-        if (verbose)
-            fmt.format("I: send request to '%s' service: \n%s", service,
-                    request.toString());
+        if (verbose) {
+            log.format("I: send request to '%s' service: \n", service);
+            request.dump(log.out());
+        }
         ZMsg reply = null;
 
         int retriesLeft = retries;
@@ -88,8 +89,10 @@ public class mdcliapi {
 
             if (items.pollin(0)) {
                 ZMsg msg = ZMsg.recvMsg(client);
-                if (verbose)
-                    fmt.format("I: received reply: \n%s", request.toString());
+                if (verbose){
+                    log.format("I: received reply: \n");
+                    msg.dump(log.out());
+                }
                 // Don't try to handle errors, just assert noisily
                 assert (msg.size() >= 3);
 
@@ -106,10 +109,10 @@ public class mdcliapi {
             } else {
                 items.unregister(client);
                 if (--retriesLeft == 0) {
-                    fmt.format("W: permanent error, abandoning\n");
+                    log.format("W: permanent error, abandoning\n");
                     break;
                 }
-                fmt.format("W: no reply, reconnecting...\n");
+                log.format("W: no reply, reconnecting...\n");
                 reconnectToBroker();
             }
         }
