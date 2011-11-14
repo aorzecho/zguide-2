@@ -20,7 +20,7 @@ public class mdbroker {
     // We'd normally pull these from config data
     private static final String INTERNAL_SERVICE_PREFIX = "mmi.";
     private static final int HEARTBEAT_LIVENESS = 3; // 3-5 is reasonable
-    private static final int HEARTBEAT_INTERVAL = 1000; // msecs
+    private static final int HEARTBEAT_INTERVAL = 2500; // msecs
     private static final int HEARTBEAT_EXPIRY = HEARTBEAT_INTERVAL
             * HEARTBEAT_LIVENESS;
 
