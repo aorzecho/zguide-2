@@ -197,7 +197,7 @@ public class mdbroker {
                 // Remove & save client return envelope and insert the
                 // protocol header and service name, then rewrap envelope.
                 ZFrame client = msg.unwrap();
-                msg.addFirst(new ZFrame(worker.service.name));
+                msg.addFirst(worker.service.name);
                 msg.addFirst(MDP.C_CLIENT.newFrame());
                 msg.wrap(client);
                 msg.send(socket);
@@ -255,7 +255,7 @@ public class mdbroker {
      */
     private Service requireService(ZFrame serviceFrame) {
         assert (serviceFrame != null);
-        String name = serviceFrame.strhex();
+        String name = serviceFrame.toString();
         Service service = services.get(name);
         if (service == null) {
             service = new Service(name);
